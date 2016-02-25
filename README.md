@@ -8,7 +8,7 @@ These are the official PHP bindings to [libpostal](https://github.com/openvenues
 Usage
 -----
 
-```
+```php
 $expansions = Postal\Expand::expand_address("Quatre vignt douze Ave des Champs-Élysées");
 foreach ($expansions as $expansion) {
     echo "$expansion\n";
