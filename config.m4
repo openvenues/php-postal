@@ -11,8 +11,6 @@ PHP_ARG_WITH(libpostal-dir, for libpostal support,
 [  --with-libpostal-dir[=DIR]             Set the path to libpostal install prefix.], yes)
 
 if test "$PHP_POSTAL" != "no"; then
-  dnl Write more examples of tests here...
-
   AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
   if test "x$PKG_CONFIG" = "xno"; then
     AC_MSG_RESULT([pkg-config not found])
@@ -24,10 +22,12 @@ if test "$PHP_POSTAL" != "no"; then
   else
     LIBPOSTAL_VERSION=`$PKG_CONFIG libpostal --modversion`
 
-    AC_MSG_RESULT([found version $LIBPOSTAL_VERSION])
+    AC_MSG_RESULT([found libpostal version $LIBPOSTAL_VERSION])
 
     LIBPOSTAL_LIBS=`$PKG_CONFIG libpostal --libs`
     LIBPOSTAL_INCLUDES=`$PKG_CONFIG libpostal --cflags`
+
+    CFLAGS="-std=gnu99 $LIBPOSTAL_INCLUDES"
 
     PHP_EVAL_LIBLINE($LIBPOSTAL_LIBS, POSTAL_SHARED_LIBADD)
     PHP_EVAL_INCLINE($LIBPOSTAL_INCLUDES)
