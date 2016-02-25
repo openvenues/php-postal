@@ -26,4 +26,4 @@ install:
     - ./configure
     - make
 script:
-    - make test
+    - yes n | make test
