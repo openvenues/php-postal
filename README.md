@@ -23,7 +23,7 @@ foreach ($parsed as $component) {
 Installation
 ------------
 
-Before using the Python bindings, you must install the libpostal C library. Make sure you have the following prerequisites:
+Before using the PHP bindings, you must install the libpostal C library. Make sure you have the following prerequisites:
 
 **On Linux (Ubuntu)**
 ```
@@ -49,7 +49,7 @@ sudo make install
 sudo ldconfig
 ```
 
-To install the PHP extension, run:
+**Installing the PHP extension**
 
 ```
 git clone https://github.com/openvenues/php-postal
@@ -57,7 +57,7 @@ cd php-postal
 phpize
 ./configure
 make
-make install
+sudo make install
 ```
 
 This will build a 'postal.so' shared extension. Add it to php.ini using:
