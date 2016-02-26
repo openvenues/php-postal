@@ -6,15 +6,15 @@ Check parser
 <?php
 $parsed = Postal\Parser::parse_address("Barboncino Pizza 781 Franklin Ave Crown Heights Brooklyn NYC NY 11216 USA");
 foreach ($parsed as $component) {
-    echo "{$component['label']}: {$component['component']}\n";
+    echo "{$component['label']}: {$component['value']}\n";
 }
 $parsed = Postal\Parser::parse_address("whole foods ny");
 foreach ($parsed as $component) {
-    echo "{$component['label']}: {$component['component']}\n";
+    echo "{$component['label']}: {$component['value']}\n";
 }
 $parsed = Postal\Parser::parse_address("Государственный Эрмитаж Дворцовая наб., 34 191186, St. Petersburg, Russia", array("country" => "ru", "language" => "ru"));
 foreach ($parsed as $component) {
-    echo "{$component['label']}: {$component['component']}\n";
+    echo "{$component['label']}: {$component['value']}\n";
 }
 ?>
 --EXPECT--

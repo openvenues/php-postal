@@ -409,13 +409,13 @@ PHP_METHOD(Parser, parse_address) {
         int copy = 1;
 
         #define LABEL_KEY "label"
-        #define COMPONENT_KEY "component"
+        #define VALUE_KEY "value"
 
         for (size_t i = 0; i < response->num_components; i++) {
             ALLOC_INIT_ZVAL(component);
             array_init(component);
             add_assoc_string(component, LABEL_KEY, response->labels[i], copy);
-            add_assoc_string(component, COMPONENT_KEY, response->components[i], copy);
+            add_assoc_string(component, VALUE_KEY, response->components[i], copy);
             add_index_zval(ret, (int)i, component);
         }
 
