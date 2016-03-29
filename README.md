@@ -9,7 +9,7 @@ Usage
 -----
 
 ```php
-$expansions = Postal\Expand::expand_address("Quatre vignt douze Ave des Champs-Élysées");
+$expansions = Postal\Expand::expand_address("Quatre vingt douze Ave des Champs-Élysées");
 foreach ($expansions as $expansion) {
     echo "$expansion\n";
 }
