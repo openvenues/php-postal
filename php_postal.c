@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 5                                                        |
+  | PHP Version 7                                                        |
   +----------------------------------------------------------------------+
   | Copyright (c) 1997-2015 The PHP Group                                |
   +----------------------------------------------------------------------+
@@ -184,8 +184,9 @@ PHP_METHOD(Expand, expand_address) {
     char *address;
     int address_len;
     HashTable *php_options = NULL;
-    zval **val;
-    zval *ret;
+    zval *val;
+    zval ret;
+    zend_string *str;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|h", &address, &address_len, &php_options) == FAILURE) {
         return;
@@ -199,33 +200,33 @@ PHP_METHOD(Expand, expand_address) {
     if (php_options != NULL) {
         #define LANGUAGES_KEY "languages"
 
-        if (zend_hash_find(php_options, LANGUAGES_KEY, strlen(LANGUAGES_KEY) + 1, (void **)&val) == SUCCESS) {
-            if (Z_TYPE_PP(val) != IS_ARRAY) {
+        // if (zend_hash_find(php_options, LANGUAGES_KEY, strlen(LANGUAGES_KEY) + 1, (void **)&val) == SUCCESS) {
+        str = zend_string_init("languages", sizeof("languages")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            if (Z_TYPE_P(val) != IS_ARRAY) {
                 RETURN_NULL();
             }
-            size_t num_php_langs = zend_hash_num_elements(Z_ARRVAL_PP(val));
+            size_t num_php_langs = zend_hash_num_elements(Z_ARRVAL_P(val));
             languages = malloc(sizeof(char *) * num_php_langs);
 
-            HashPosition pos;
-            zval **php_lang;
+            ulong num_key;
+            zend_string *key;
+            zval *php_lang;
 
-            zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(val), &pos);
+            ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(val), num_key, key, php_lang) {
 
-            while (zend_hash_get_current_data_ex(Z_ARRVAL_PP(val), (void **)&php_lang, &pos) == SUCCESS) {
-
-                if (Z_TYPE_PP(php_lang) != IS_STRING) {
+                if (Z_TYPE_P(php_lang) != IS_STRING) {
                     continue;
                 }
-                size_t lang_len = Z_STRLEN_PP(php_lang);
+                size_t lang_len = Z_STRLEN_P(php_lang);
                 if (lang_len > MAX_LANGUAGE_LEN) {
                     continue;
                 }
-                char *lang = strndup(Z_STRVAL_PP(php_lang), lang_len);
+                char *lang = strndup(Z_STRVAL_P(php_lang), lang_len);
 
                 languages[num_languages++] = lang;
 
-                zend_hash_move_forward_ex(Z_ARRVAL_PP(val), &pos);
-            }
+            } ZEND_HASH_FOREACH_END();
 
             if (num_languages > 0) {
                 options.languages = languages;
@@ -234,110 +235,128 @@ PHP_METHOD(Expand, expand_address) {
         }
 
         #define ADDRESS_COMPONENTS_KEY "address_components"
-
-        if (zend_hash_find(php_options, ADDRESS_COMPONENTS_KEY, strlen(ADDRESS_COMPONENTS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.address_components = (uint16_t)Z_LVAL_PP(val);
+        str = zend_string_init("address_components", sizeof("address_components")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.address_components = (bool)Z_LVAL_P(val);
         }
 
         #define LATIN_ASCII_KEY "latin_ascii"
-        if (zend_hash_find(php_options, LATIN_ASCII_KEY, strlen(LATIN_ASCII_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.latin_ascii = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("latin_ascii", sizeof("latin_ascii")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.latin_ascii = (bool)Z_LVAL_P(val);
         }
 
         #define TRANSLITERATE_KEY "transliterate"
-        if (zend_hash_find(php_options, TRANSLITERATE_KEY, strlen(TRANSLITERATE_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.transliterate = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("transliterate", sizeof("transliterate")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.transliterate = (bool)Z_LVAL_P(val);
         }
 
         #define STRIP_ACCENTS_KEY "strip_accents"
-        if (zend_hash_find(php_options, STRIP_ACCENTS_KEY, strlen(STRIP_ACCENTS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.strip_accents = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("strip_accents", sizeof("strip_accents")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.strip_accents = (bool)Z_LVAL_P(val);
         }
 
         #define DECOMPOSE_KEY "decompose"
-        if (zend_hash_find(php_options, DECOMPOSE_KEY, strlen(DECOMPOSE_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.decompose = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("decompose", sizeof("decompose")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.decompose = (bool)Z_LVAL_P(val);
         }
 
         #define LOWERCASE_KEY "lowercase"
-        if (zend_hash_find(php_options, LOWERCASE_KEY, strlen(LOWERCASE_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.lowercase = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("lowercase", sizeof("lowercase")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.lowercase = (bool)Z_LVAL_P(val);
         }
 
         #define TRIM_STRING_KEY "trim_string"
-        if (zend_hash_find(php_options, TRIM_STRING_KEY, strlen(TRIM_STRING_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.trim_string = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("trim_string", sizeof("trim_string")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.trim_string = (bool)Z_LVAL_P(val);
         }
 
         #define DROP_PARENTHETICALS_KEY "drop_parentheticals"
-        if (zend_hash_find(php_options, DROP_PARENTHETICALS_KEY, strlen(DROP_PARENTHETICALS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.drop_parentheticals = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("drop_parentheticals", sizeof("drop_parentheticals")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.drop_parentheticals = (bool)Z_LVAL_P(val);
         }
 
         #define REPLACE_NUMERIC_HYPHENS_KEY "replace_numeric_hyphens"
-        if (zend_hash_find(php_options, REPLACE_NUMERIC_HYPHENS_KEY, strlen(REPLACE_NUMERIC_HYPHENS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.replace_numeric_hyphens  = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("replace_numeric_hyphens", sizeof("replace_numeric_hyphens")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.replace_numeric_hyphens = (bool)Z_LVAL_P(val);
         }
 
         #define DELETE_NUMERIC_HYPHENS_KEY "delete_numeric_hyphens"
-        if (zend_hash_find(php_options, DELETE_NUMERIC_HYPHENS_KEY, strlen(DELETE_NUMERIC_HYPHENS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.delete_numeric_hyphens  = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("delete_numeric_hyphens", sizeof("delete_numeric_hyphens")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.delete_numeric_hyphens = (bool)Z_LVAL_P(val);
         }
 
         #define SPLIT_ALPHA_FROM_NUMERIC_KEY "split_alpha_from_numeric"
-        if (zend_hash_find(php_options, SPLIT_ALPHA_FROM_NUMERIC_KEY, strlen(SPLIT_ALPHA_FROM_NUMERIC_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.split_alpha_from_numeric = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("split_alpha_from_numeric", sizeof("split_alpha_from_numeric")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.split_alpha_from_numeric = (bool)Z_LVAL_P(val);
         }
 
         #define REPLACE_WORD_HYPHENS_KEY "replace_word_hyphens"
-        if (zend_hash_find(php_options, REPLACE_WORD_HYPHENS_KEY, strlen(REPLACE_WORD_HYPHENS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.replace_word_hyphens = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("replace_word_hyphens", sizeof("replace_word_hyphens")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.replace_word_hyphens = (bool)Z_LVAL_P(val);
         }
 
         #define DELETE_WORD_HYPHENS_KEY "delete_word_hyphens"
-        if (zend_hash_find(php_options, DELETE_WORD_HYPHENS_KEY, strlen(DELETE_WORD_HYPHENS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.delete_word_hyphens = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("delete_word_hyphens", sizeof("delete_word_hyphens")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.delete_word_hyphens = (bool)Z_LVAL_P(val);
         }
 
         #define DELETE_FINAL_PERIODS_KEY "delete_final_periods"
-        if (zend_hash_find(php_options, DELETE_FINAL_PERIODS_KEY, strlen(DELETE_FINAL_PERIODS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.delete_final_periods = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("delete_final_periods", sizeof("delete_final_periods")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.delete_final_periods = (bool)Z_LVAL_P(val);
         }
 
         #define DELETE_ACRONYM_PERIODS_KEY "delete_acronym_periods"
-        if (zend_hash_find(php_options, DELETE_ACRONYM_PERIODS_KEY, strlen(DELETE_ACRONYM_PERIODS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.delete_acronym_periods = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("delete_acronym_periods", sizeof("delete_acronym_periods")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.delete_acronym_periods = (bool)Z_LVAL_P(val);
         }
 
         #define DROP_ENGLISH_POSSESSIVES_KEY "drop_english_possessives"
-        if (zend_hash_find(php_options, DROP_ENGLISH_POSSESSIVES_KEY, strlen(DROP_ENGLISH_POSSESSIVES_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.drop_english_possessives = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("drop_english_possessives", sizeof("drop_english_possessives")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.drop_english_possessives = (bool)Z_LVAL_P(val);
         }
 
         #define DELETE_APOSTROPHES_KEY "delete_apostrophes"
-        if (zend_hash_find(php_options, DELETE_APOSTROPHES_KEY, strlen(DELETE_APOSTROPHES_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.delete_apostrophes = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("delete_apostrophes", sizeof("delete_apostrophes")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.delete_apostrophes = (bool)Z_LVAL_P(val);
         }
 
         #define EXPAND_NUMEX_KEY "expand_numex"
-        if (zend_hash_find(php_options, EXPAND_NUMEX_KEY, strlen(EXPAND_NUMEX_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.expand_numex = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("expand_numex", sizeof("expand_numex")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.expand_numex = (bool)Z_LVAL_P(val);
         }
 
         #define ROMAN_NUMERALS_KEY "roman_numerals"
-        if (zend_hash_find(php_options, ROMAN_NUMERALS_KEY, strlen(ROMAN_NUMERALS_KEY) + 1, (void **) &val) == SUCCESS) {
-            options.roman_numerals = (bool)Z_LVAL_PP(val);
+        str = zend_string_init("roman_numerals", sizeof("roman_numerals")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) != NULL) {
+            options.roman_numerals = (bool)Z_LVAL_P(val);
         }
+
     }
 
     size_t num_expansions;
     char **expansions = expand_address(address, options, &num_expansions);
 
-    ALLOC_INIT_ZVAL(ret);
-    array_init_size(ret, num_expansions);
+    array_init_size(&ret, num_expansions);
     int copy = 1;
     for (size_t i = 0; i < num_expansions; i++) {
-        add_index_string(ret, (int)i, expansions[i], copy);
+        add_index_string(&ret, (int)i, expansions[i]); // , copy
     }
 
     expansion_array_destroy(expansions, num_expansions);
@@ -354,17 +373,18 @@ PHP_METHOD(Expand, expand_address) {
 
     copy = 0;
     int destruct = 0;
-    RETURN_ZVAL(ret, copy, destruct);
+    RETURN_ZVAL(&ret, copy, destruct);
 
 }
 
 PHP_METHOD(Parser, parse_address) {
     char *address;
     int address_len;
-    zval *ret;
-    zval *component;
+    zval ret;
+    zval component;
     HashTable *php_options = NULL;
-    zval **val;
+    zval *val;
+    zend_string *str;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|h", &address, &address_len, &php_options) == FAILURE) {
         RETURN_NULL();
@@ -377,16 +397,16 @@ PHP_METHOD(Parser, parse_address) {
 
     if (php_options != NULL) {
         #define LANGUAGE_KEY "language"
-
-        if (zend_hash_find(php_options, LANGUAGE_KEY, strlen(LANGUAGE_KEY) + 1, (void **)&val) == SUCCESS && Z_TYPE_PP(val) == IS_STRING) {
-            language = strndup(Z_STRVAL_PP(val), Z_STRLEN_PP(val));
+        str = zend_string_init("language", sizeof("language")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) && Z_TYPE_P(val) == IS_STRING) {
+            language = strndup(Z_STRVAL_P(val), Z_STRLEN_P(val));
             options.language = language;
         }
 
-        #define COUNTRY_KEY "language"
-
-        if (zend_hash_find(php_options, COUNTRY_KEY, strlen(COUNTRY_KEY) + 1, (void **)&val) == SUCCESS && Z_TYPE_PP(val) == IS_STRING) {
-            country = strndup(Z_STRVAL_PP(val), Z_STRLEN_PP(val));
+        #define COUNTRY_KEY "country"
+        str = zend_string_init("country", sizeof("country")-1, 0);
+        if ((val = zend_hash_find(php_options, str)) && Z_TYPE_P(val) == IS_STRING) {
+            country = strndup(Z_STRVAL_P(val), Z_STRLEN_P(val));
             options.country = country;
         }
     }
@@ -404,26 +424,24 @@ PHP_METHOD(Parser, parse_address) {
 
     if (response != NULL) {
 
-        ALLOC_INIT_ZVAL(ret);
-        array_init_size(ret, response->num_components);
+        array_init_size(&ret, response->num_components);
         int copy = 1;
 
         #define LABEL_KEY "label"
         #define VALUE_KEY "value"
 
         for (size_t i = 0; i < response->num_components; i++) {
-            ALLOC_INIT_ZVAL(component);
-            array_init(component);
-            add_assoc_string(component, LABEL_KEY, response->labels[i], copy);
-            add_assoc_string(component, VALUE_KEY, response->components[i], copy);
-            add_index_zval(ret, (int)i, component);
+            array_init(&component);
+            add_assoc_string(&component, LABEL_KEY, response->labels[i]); // , copy
+            add_assoc_string(&component, VALUE_KEY, response->components[i]); // , copy
+            add_index_zval(&ret, (int)i, &component);
         }
 
         address_parser_response_destroy(response);
 
         copy = 0;
         int destruct = 0;
-        RETURN_ZVAL(ret, copy, destruct);
+        RETURN_ZVAL(&ret, copy, destruct);
     } else {
         RETURN_NULL();
     }
