@@ -182,7 +182,7 @@ PHP_MINFO_FUNCTION(postal)
 
 PHP_METHOD(Expand, expand_address) {
     char *address;
-    int address_len;
+    size_t address_len;
     HashTable *php_options = NULL;
     zval *val;
     zval ret;
@@ -237,7 +237,7 @@ PHP_METHOD(Expand, expand_address) {
         #define ADDRESS_COMPONENTS_KEY "address_components"
         str = zend_string_init("address_components", sizeof("address_components")-1, 0);
         if ((val = zend_hash_find(php_options, str)) != NULL) {
-            options.address_components = (bool)Z_LVAL_P(val);
+            options.address_components = (uint16_t)Z_LVAL_P(val);
         }
 
         #define LATIN_ASCII_KEY "latin_ascii"
@@ -379,7 +379,7 @@ PHP_METHOD(Expand, expand_address) {
 
 PHP_METHOD(Parser, parse_address) {
     char *address;
-    int address_len;
+    size_t address_len;
     zval ret;
     zval component;
     HashTable *php_options = NULL;
@@ -391,7 +391,7 @@ PHP_METHOD(Parser, parse_address) {
     }
 
     address_parser_options_t options = get_libpostal_address_parser_default_options();
-    
+
     char *language = NULL;
     char *country = NULL;
 
