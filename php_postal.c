@@ -121,23 +121,21 @@ PHP_MINIT_FUNCTION(postal)
         return FAILURE;
     }
 
-    REGISTER_LONG_CONSTANT("ADDRESS_NONE", ADDRESS_NONE, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_ANY", ADDRESS_ANY, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_NAME", ADDRESS_NAME, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_HOUSE_NUMBER", ADDRESS_HOUSE_NUMBER, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_STREET", ADDRESS_STREET, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_UNIT", ADDRESS_UNIT, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_LOCALITY", ADDRESS_LOCALITY, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_ADMIN1", ADDRESS_ADMIN1, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_ADMIN2", ADDRESS_ADMIN2, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_ADMIN3", ADDRESS_ADMIN3, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_ADMIN4", ADDRESS_ADMIN4, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_ADMIN_OTHER", ADDRESS_ADMIN_OTHER, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_COUNTRY", ADDRESS_COUNTRY, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_POSTAL_CODE", ADDRESS_POSTAL_CODE, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_NEIGHBORHOOD", ADDRESS_NEIGHBORHOOD, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("ADDRESS_ALL", ADDRESS_ALL, CONST_CS | CONST_PERSISTENT);
-
+    REGISTER_LONG_CONSTANT("ADDRESS_NONE", LIBPOSTAL_ADDRESS_NONE, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_ANY", LIBPOSTAL_ADDRESS_ANY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_NAME", LIBPOSTAL_ADDRESS_NAME, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_HOUSE_NUMBER", LIBPOSTAL_ADDRESS_HOUSE_NUMBER, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_STREET", LIBPOSTAL_ADDRESS_STREET, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_UNIT", LIBPOSTAL_ADDRESS_UNIT, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_LEVEL", LIBPOSTAL_ADDRESS_LEVEL, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_STAIRCASE", LIBPOSTAL_ADDRESS_STAIRCASE, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_ENTRANCE", LIBPOSTAL_ADDRESS_ENTRANCE, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_CATEGORY", LIBPOSTAL_ADDRESS_CATEGORY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_NEAR", LIBPOSTAL_ADDRESS_NEAR, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_TOPONYM", LIBPOSTAL_ADDRESS_TOPONYM, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_POSTAL_CODE", LIBPOSTAL_ADDRESS_POSTAL_CODE, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_PO_BOX", LIBPOSTAL_ADDRESS_PO_BOX, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("ADDRESS_ALL", LIBPOSTAL_ADDRESS_ALL, CONST_CS | CONST_PERSISTENT);
 
     INIT_CLASS_ENTRY(expand_ce, "Postal\\Expand", expand_methods);
     expand_class_entry_ptr = zend_register_internal_class(&expand_ce TSRMLS_CC);
@@ -191,13 +189,33 @@ PHP_METHOD(Expand, expand_address) {
         return;
     }
 
-    normalize_options_t options = get_libpostal_default_options();
+    libpostal_normalize_options_t options = libpostal_get_default_options();
 
     size_t num_languages = 0;
     char **languages = NULL;
 
+    #define LANGUAGES_KEY "languages"
+    #define ADDRESS_COMPONENTS_KEY "address_components"
+    #define LATIN_ASCII_KEY "latin_ascii"
+    #define TRANSLITERATE_KEY "transliterate"
+    #define STRIP_ACCENTS_KEY "strip_accents"
+    #define DECOMPOSE_KEY "decompose"
+    #define LOWERCASE_KEY "lowercase"
+    #define TRIM_STRING_KEY "trim_string"
+    #define DROP_PARENTHETICALS_KEY "drop_parentheticals"
+    #define REPLACE_NUMERIC_HYPHENS_KEY "replace_numeric_hyphens"
+    #define DELETE_NUMERIC_HYPHENS_KEY "delete_numeric_hyphens"
+    #define SPLIT_ALPHA_FROM_NUMERIC_KEY "split_alpha_from_numeric"
+    #define REPLACE_WORD_HYPHENS_KEY "replace_word_hyphens"
+    #define DELETE_WORD_HYPHENS_KEY "delete_word_hyphens"
+    #define DELETE_FINAL_PERIODS_KEY "delete_final_periods"
+    #define DELETE_ACRONYM_PERIODS_KEY "delete_acronym_periods"
+    #define DROP_ENGLISH_POSSESSIVES_KEY "drop_english_possessives"
+    #define DELETE_APOSTROPHES_KEY "delete_apostrophes"
+    #define EXPAND_NUMEX_KEY "expand_numex"
+    #define ROMAN_NUMERALS_KEY "roman_numerals"
+
     if (php_options != NULL) {
-        #define LANGUAGES_KEY "languages"
 
         if (zend_hash_find(php_options, LANGUAGES_KEY, strlen(LANGUAGES_KEY) + 1, (void **)&val) == SUCCESS) {
             if (Z_TYPE_PP(val) != IS_ARRAY) {
@@ -217,7 +235,7 @@ PHP_METHOD(Expand, expand_address) {
                     continue;
                 }
                 size_t lang_len = Z_STRLEN_PP(php_lang);
-                if (lang_len > MAX_LANGUAGE_LEN) {
+                if (lang_len > LIBPOSTAL_MAX_LANGUAGE_LEN) {
                     continue;
                 }
                 char *lang = strndup(Z_STRVAL_PP(php_lang), lang_len);
@@ -233,105 +251,85 @@ PHP_METHOD(Expand, expand_address) {
             }
         }
 
-        #define ADDRESS_COMPONENTS_KEY "address_components"
-
         if (zend_hash_find(php_options, ADDRESS_COMPONENTS_KEY, strlen(ADDRESS_COMPONENTS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.address_components = (uint16_t)Z_LVAL_PP(val);
         }
 
-        #define LATIN_ASCII_KEY "latin_ascii"
         if (zend_hash_find(php_options, LATIN_ASCII_KEY, strlen(LATIN_ASCII_KEY) + 1, (void **) &val) == SUCCESS) {
             options.latin_ascii = (bool)Z_LVAL_PP(val);
         }
 
-        #define TRANSLITERATE_KEY "transliterate"
         if (zend_hash_find(php_options, TRANSLITERATE_KEY, strlen(TRANSLITERATE_KEY) + 1, (void **) &val) == SUCCESS) {
             options.transliterate = (bool)Z_LVAL_PP(val);
         }
 
-        #define STRIP_ACCENTS_KEY "strip_accents"
         if (zend_hash_find(php_options, STRIP_ACCENTS_KEY, strlen(STRIP_ACCENTS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.strip_accents = (bool)Z_LVAL_PP(val);
         }
 
-        #define DECOMPOSE_KEY "decompose"
         if (zend_hash_find(php_options, DECOMPOSE_KEY, strlen(DECOMPOSE_KEY) + 1, (void **) &val) == SUCCESS) {
             options.decompose = (bool)Z_LVAL_PP(val);
         }
 
-        #define LOWERCASE_KEY "lowercase"
         if (zend_hash_find(php_options, LOWERCASE_KEY, strlen(LOWERCASE_KEY) + 1, (void **) &val) == SUCCESS) {
             options.lowercase = (bool)Z_LVAL_PP(val);
         }
 
-        #define TRIM_STRING_KEY "trim_string"
         if (zend_hash_find(php_options, TRIM_STRING_KEY, strlen(TRIM_STRING_KEY) + 1, (void **) &val) == SUCCESS) {
             options.trim_string = (bool)Z_LVAL_PP(val);
         }
 
-        #define DROP_PARENTHETICALS_KEY "drop_parentheticals"
         if (zend_hash_find(php_options, DROP_PARENTHETICALS_KEY, strlen(DROP_PARENTHETICALS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.drop_parentheticals = (bool)Z_LVAL_PP(val);
         }
 
-        #define REPLACE_NUMERIC_HYPHENS_KEY "replace_numeric_hyphens"
         if (zend_hash_find(php_options, REPLACE_NUMERIC_HYPHENS_KEY, strlen(REPLACE_NUMERIC_HYPHENS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.replace_numeric_hyphens  = (bool)Z_LVAL_PP(val);
         }
 
-        #define DELETE_NUMERIC_HYPHENS_KEY "delete_numeric_hyphens"
         if (zend_hash_find(php_options, DELETE_NUMERIC_HYPHENS_KEY, strlen(DELETE_NUMERIC_HYPHENS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.delete_numeric_hyphens  = (bool)Z_LVAL_PP(val);
         }
 
-        #define SPLIT_ALPHA_FROM_NUMERIC_KEY "split_alpha_from_numeric"
         if (zend_hash_find(php_options, SPLIT_ALPHA_FROM_NUMERIC_KEY, strlen(SPLIT_ALPHA_FROM_NUMERIC_KEY) + 1, (void **) &val) == SUCCESS) {
             options.split_alpha_from_numeric = (bool)Z_LVAL_PP(val);
         }
 
-        #define REPLACE_WORD_HYPHENS_KEY "replace_word_hyphens"
         if (zend_hash_find(php_options, REPLACE_WORD_HYPHENS_KEY, strlen(REPLACE_WORD_HYPHENS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.replace_word_hyphens = (bool)Z_LVAL_PP(val);
         }
 
-        #define DELETE_WORD_HYPHENS_KEY "delete_word_hyphens"
         if (zend_hash_find(php_options, DELETE_WORD_HYPHENS_KEY, strlen(DELETE_WORD_HYPHENS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.delete_word_hyphens = (bool)Z_LVAL_PP(val);
         }
 
-        #define DELETE_FINAL_PERIODS_KEY "delete_final_periods"
         if (zend_hash_find(php_options, DELETE_FINAL_PERIODS_KEY, strlen(DELETE_FINAL_PERIODS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.delete_final_periods = (bool)Z_LVAL_PP(val);
         }
 
-        #define DELETE_ACRONYM_PERIODS_KEY "delete_acronym_periods"
         if (zend_hash_find(php_options, DELETE_ACRONYM_PERIODS_KEY, strlen(DELETE_ACRONYM_PERIODS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.delete_acronym_periods = (bool)Z_LVAL_PP(val);
         }
 
-        #define DROP_ENGLISH_POSSESSIVES_KEY "drop_english_possessives"
         if (zend_hash_find(php_options, DROP_ENGLISH_POSSESSIVES_KEY, strlen(DROP_ENGLISH_POSSESSIVES_KEY) + 1, (void **) &val) == SUCCESS) {
             options.drop_english_possessives = (bool)Z_LVAL_PP(val);
         }
 
-        #define DELETE_APOSTROPHES_KEY "delete_apostrophes"
         if (zend_hash_find(php_options, DELETE_APOSTROPHES_KEY, strlen(DELETE_APOSTROPHES_KEY) + 1, (void **) &val) == SUCCESS) {
             options.delete_apostrophes = (bool)Z_LVAL_PP(val);
         }
 
-        #define EXPAND_NUMEX_KEY "expand_numex"
         if (zend_hash_find(php_options, EXPAND_NUMEX_KEY, strlen(EXPAND_NUMEX_KEY) + 1, (void **) &val) == SUCCESS) {
             options.expand_numex = (bool)Z_LVAL_PP(val);
         }
 
-        #define ROMAN_NUMERALS_KEY "roman_numerals"
         if (zend_hash_find(php_options, ROMAN_NUMERALS_KEY, strlen(ROMAN_NUMERALS_KEY) + 1, (void **) &val) == SUCCESS) {
             options.roman_numerals = (bool)Z_LVAL_PP(val);
         }
     }
 
     size_t num_expansions;
-    char **expansions = expand_address(address, options, &num_expansions);
+    char **expansions = libpostal_expand_address(address, options, &num_expansions);
 
     ALLOC_INIT_ZVAL(ret);
     array_init_size(ret, num_expansions);
@@ -340,7 +338,7 @@ PHP_METHOD(Expand, expand_address) {
         add_index_string(ret, (int)i, expansions[i], copy);
     }
 
-    expansion_array_destroy(expansions, num_expansions);
+    libpostal_expansion_array_destroy(expansions, num_expansions);
 
     if (num_languages > 0) {
         for (size_t i = 0; i < num_languages; i++) {
@@ -370,7 +368,7 @@ PHP_METHOD(Parser, parse_address) {
         RETURN_NULL();
     }
 
-    address_parser_options_t options = get_libpostal_address_parser_default_options();
+    libpostal_address_parser_options_t options = libpostal_get_address_parser_default_options();
     
     char *language = NULL;
     char *country = NULL;
@@ -392,7 +390,7 @@ PHP_METHOD(Parser, parse_address) {
     }
 
     size_t num_expansions;
-    address_parser_response_t *response = parse_address(address, options);
+    libpostal_address_parser_response_t *response = libpostal_parse_address(address, options);
 
     if (language != NULL) {
         free(language);
@@ -419,7 +417,7 @@ PHP_METHOD(Parser, parse_address) {
             add_index_zval(ret, (int)i, component);
         }
 
-        address_parser_response_destroy(response);
+        libpostal_address_parser_response_destroy(response);
 
         copy = 0;
         int destruct = 0;
