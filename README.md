@@ -75,7 +75,7 @@ extension = postal.so
 Compatibility
 -------------
 
-php-postal currently supports PHP 5.5 and 5.6. PHP 7 support is in the works but not implemented yet. HipHop/HHVM uses a different process for extensions (C++) so would be out of scope for this repo.
+php-postal currently supports PHP 5.5, 5.6 and PHP 7. HipHop/HHVM uses a different process for extensions (C++) so it would be best to implement that as a separate project.
 
 Tests
 -----
