@@ -77,6 +77,8 @@ Compatibility
 
 php-postal currently supports PHP 5.5, 5.6 and PHP 7. HipHop/HHVM uses a different process for extensions (C++) so it would be best to implement that as a separate project.
 
+Special thanks to Craig Morris (https://github.com/morrislaptop) for adding PHP7 compatibility.
+
 Tests
 -----
 
