@@ -530,11 +530,11 @@ PHP_METHOD(Expand, expand_address) {
     size_t num_expansions;
     char **expansions = libpostal_expand_address(address, options, &num_expansions);
 
+    int copy = 1;
 #if PHP_MAJOR_VERSION == 5
     ALLOC_INIT_ZVAL(ret);
     array_init_size(ret, num_expansions);
 
-    int copy = 1;
 #elif PHP_MAJOR_VERSION == 7
     array_init_size(&ret, num_expansions);
 #endif
@@ -639,10 +639,10 @@ PHP_METHOD(Parser, parse_address) {
 
     if (response != NULL) {
 
+        int copy = 1;
 #if PHP_MAJOR_VERSION == 5
         ALLOC_INIT_ZVAL(ret);
         array_init_size(ret, response->num_components);
-        int copy = 1;
 #elif PHP_MAJOR_VERSION == 7
         array_init_size(&ret, response->num_components);
 #endif
@@ -667,8 +667,8 @@ PHP_METHOD(Parser, parse_address) {
 
         libpostal_address_parser_response_destroy(response);
 
-        copy = 0;
         int destruct = 0;
+        copy = 0;
 #if PHP_MAJOR_VERSION == 5
         RETURN_ZVAL(ret, copy, destruct);
 #elif PHP_MAJOR_VERSION == 7
