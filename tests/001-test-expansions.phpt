@@ -26,5 +26,5 @@ foreach ($expansions as $expansion) {
 92 avenue des champs-elysees
 92 avenue des champs elysees
 92 avenue des champselysees
-friedrichstraße 128 berlin germany
-friedrich straße 128 berlin germany
+friedrichstrasse 128 berlin germany
+friedrich strasse 128 berlin germany
