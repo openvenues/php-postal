@@ -16,7 +16,7 @@ foreach ($expansions as $expansion) {
 
 $parsed = Postal\Parser::parse_address("The Book Club 100-106 Leonard St, Shoreditch, London, Greater London, EC2A 4RH, United Kingdom");
 foreach ($parsed as $component) {
-    echo "{$component['label']}: {$component['component']}\n";
+    echo "{$component['label']}: {$component['value']}\n";
 }
 ```
 
