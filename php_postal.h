@@ -44,6 +44,7 @@ PHP_MINFO_FUNCTION(postal);
 
 PHP_METHOD(Expand, expand_address);
 PHP_METHOD(Parser, parse_address);
+PHP_METHOD(Classify, classify_language);
 
 /* 
   	Declare any global variables you may need between the BEGIN
