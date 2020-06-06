@@ -1,0 +1,10 @@
+ARG_ENABLE("postal", "postal support", "no");
+
+if (PHP_POSTAL != "no") {
+	if (CHECK_LIB("libpostal.lib", "postal", PHP_POSTAL) &&
+		CHECK_HEADER_ADD_INCLUDE("libpostal/libpostal.h", "CFLAGS_POSTAL")) {
+		EXTENSION("postal", "php_postal.c");
+	} else {
+		WARNING("postal not enabled; libraries and/or headers not found");
+	}
+}

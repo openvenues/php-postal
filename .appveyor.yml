@@ -1,0 +1,84 @@
+# general configuration
+version: '{branch}.{build}'
+
+# environment configuration
+image: Visual Studio 2017
+clone_folder: c:\projects\php-postal
+environment:
+  BIN_SDK_VER: 2.2.0
+  matrix:
+    - PHP_VER: 7.4.6
+      LIBPOSTAL_BUILD: q6a58sbt9ynsmafx
+      ARCH: x64
+      TS: 0
+      VC: vc15
+    - PHP_VER: 7.4.6
+      LIBPOSTAL_BUILD: q6a58sbt9ynsmafx
+      ARCH: x64
+      TS: 1
+      VC: vc15
+    - PHP_VER: 7.4.6
+      LIBPOSTAL_BUILD: pdyd7jcbohebmshu
+      ARCH: x86
+      TS: 0
+      VC: vc15
+    - PHP_VER: 7.4.6
+      LIBPOSTAL_BUILD: pdyd7jcbohebmshu
+      ARCH: x86
+      TS: 1
+      VC: vc15
+    - PHP_VER: 7.3.18
+      LIBPOSTAL_BUILD: q6a58sbt9ynsmafx
+      ARCH: x64
+      TS: 0
+      VC: vc15
+    - PHP_VER: 7.3.18
+      LIBPOSTAL_BUILD: q6a58sbt9ynsmafx
+      ARCH: x64
+      TS: 1
+      VC: vc15
+    - PHP_VER: 7.3.18
+      LIBPOSTAL_BUILD: pdyd7jcbohebmshu
+      ARCH: x86
+      TS: 0
+      VC: vc15
+    - PHP_VER: 7.3.18
+      LIBPOSTAL_BUILD: pdyd7jcbohebmshu
+      ARCH: x86
+      TS: 1
+      VC: vc15
+    - PHP_VER: 7.2.31
+      LIBPOSTAL_BUILD: q6a58sbt9ynsmafx
+      ARCH: x64
+      TS: 0
+      VC: vc15
+    - PHP_VER: 7.2.31
+      LIBPOSTAL_BUILD: q6a58sbt9ynsmafx
+      ARCH: x64
+      TS: 1
+      VC: vc15
+    - PHP_VER: 7.2.31
+      LIBPOSTAL_BUILD: pdyd7jcbohebmshu
+      ARCH: x86
+      TS: 0
+      VC: vc15
+    - PHP_VER: 7.2.31
+      LIBPOSTAL_BUILD: pdyd7jcbohebmshu
+      ARCH: x86
+      TS: 1
+      VC: vc15
+cache:
+  - c:\build-cache -> .appveyor.yml, .appveyor\install.ps1
+install:
+  - ps: .appveyor\install.ps1
+
+# build configuration
+build_script:
+  - ps: .appveyor\build.ps1
+
+after_build:
+  - ps: .appveyor\package.ps1
+
+# artifacts configuration
+artifacts:
+  - path: php-postal.zip
