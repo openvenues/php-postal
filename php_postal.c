@@ -234,7 +234,7 @@ PHP_METHOD(Expand, expand_address) {
                 if (lang_len > LIBPOSTAL_MAX_LANGUAGE_LEN) {
                     continue;
                 }
-                char *lang = strndup(Z_STRVAL_PP(php_lang), lang_len);
+                char *lang = zend_strndup(Z_STRVAL_PP(php_lang), lang_len);
 
                 languages[num_languages++] = lang;
 
@@ -255,7 +255,7 @@ PHP_METHOD(Expand, expand_address) {
             size_t num_php_langs = zend_hash_num_elements(Z_ARRVAL_P(val));
             languages = malloc(sizeof(char *) * num_php_langs);
 
-            ulong num_key;
+            unsigned long num_key;
             zend_string *key;
             zval *php_lang;
 
@@ -269,7 +269,7 @@ PHP_METHOD(Expand, expand_address) {
                 if (lang_len > LIBPOSTAL_MAX_LANGUAGE_LEN) {
                     continue;
                 }
-                char *lang = strndup(Z_STRVAL_P(php_lang), lang_len);
+                char *lang = zend_strndup(Z_STRVAL_P(php_lang), lang_len);
 
                 languages[num_languages++] = lang;
 
@@ -603,13 +603,13 @@ PHP_METHOD(Parser, parse_address) {
 
 #if PHP_MAJOR_VERSION == 5
         if (zend_hash_find(php_options, LANGUAGE_KEY, strlen(LANGUAGE_KEY) + 1, (void **)&val) == SUCCESS && Z_TYPE_PP(val) == IS_STRING) {
-            language = strndup(Z_STRVAL_PP(val), Z_STRLEN_PP(val));
+            language = zend_strndup(Z_STRVAL_PP(val), Z_STRLEN_PP(val));
             options.language = language;
         }
 #elif PHP_MAJOR_VERSION == 7 || PHP_MAJOR_VERSION == 8
         str = zend_string_init(LANGUAGE_KEY, strlen(LANGUAGE_KEY), 0);
         if ((val = zend_hash_find(php_options, str)) && Z_TYPE_P(val) == IS_STRING) {
-            language = strndup(Z_STRVAL_P(val), Z_STRLEN_P(val));
+            language = zend_strndup(Z_STRVAL_P(val), Z_STRLEN_P(val));
             options.language = language;
         }
 #endif
@@ -618,12 +618,12 @@ PHP_METHOD(Parser, parse_address) {
 
 #if PHP_MAJOR_VERSION == 5
         if (zend_hash_find(php_options, COUNTRY_KEY, strlen(COUNTRY_KEY) + 1, (void **)&val) == SUCCESS && Z_TYPE_PP(val) == IS_STRING) {
-            country = strndup(Z_STRVAL_PP(val), Z_STRLEN_PP(val));
+            country = zend_strndup(Z_STRVAL_PP(val), Z_STRLEN_PP(val));
         }
 #elif PHP_MAJOR_VERSION == 7 || PHP_MAJOR_VERSION == 8
         str = zend_string_init(COUNTRY_KEY, strlen(COUNTRY_KEY), 0);
         if ((val = zend_hash_find(php_options, str)) && Z_TYPE_P(val) == IS_STRING) {
-            country = strndup(Z_STRVAL_P(val), Z_STRLEN_P(val));
+            country = zend_strndup(Z_STRVAL_P(val), Z_STRLEN_P(val));
             options.country = country;
         }
 #endif
