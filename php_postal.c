@@ -36,6 +36,11 @@ ZEND_DECLARE_MODULE_GLOBALS(postal)
 /* True global resources - no need for thread safety here */
 static int le_postal;
 
+// Lazy libpostal init
+bool lazy_libpostal_init();
+
+// libpostal initialization flag
+static bool libpostal_is_inited = false;
 
 zend_class_entry expand_ce;
 zend_class_entry *expand_class_entry_ptr;
@@ -120,9 +125,10 @@ PHP_MINIT_FUNCTION(postal)
 	/* If you have INI entries, uncomment these lines
 	REGISTER_INI_ENTRIES();
 	*/
-    if (!libpostal_setup() || !libpostal_setup_language_classifier() || !libpostal_setup_parser()) {
-        return FAILURE;
-    }
+
+	 if ( !libpostal_setup() ) {
+	        return FAILURE;
+	 }
 
     REGISTER_LONG_CONSTANT("ADDRESS_NONE", LIBPOSTAL_ADDRESS_NONE, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("ADDRESS_ANY", LIBPOSTAL_ADDRESS_ANY, CONST_CS | CONST_PERSISTENT);
@@ -158,9 +164,11 @@ PHP_MSHUTDOWN_FUNCTION(postal)
 	UNREGISTER_INI_ENTRIES();
 	*/
 
-    libpostal_teardown();
-    libpostal_teardown_language_classifier();
-    libpostal_teardown_parser();
+	if( libpostal_is_inited ) {
+		libpostal_teardown();
+		libpostal_teardown_language_classifier();
+		libpostal_teardown_parser();
+	}
 
 	return SUCCESS;
 }
@@ -201,6 +209,10 @@ PHP_METHOD(Expand, expand_address) {
 
     if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|h", &address, &address_len, &php_options) == FAILURE) {
         return;
+    }
+
+    if( !lazy_libpostal_init() ) {
+    	RETURN_NULL();
     }
 
     libpostal_normalize_options_t options = libpostal_get_default_options();
@@ -593,6 +605,10 @@ PHP_METHOD(Parser, parse_address) {
         RETURN_NULL();
     }
 
+    if( !lazy_libpostal_init() ) {
+       	RETURN_NULL();
+    }
+
     libpostal_address_parser_options_t options = libpostal_get_address_parser_default_options();
 
     char *language = NULL;
@@ -681,6 +697,20 @@ PHP_METHOD(Parser, parse_address) {
         RETURN_NULL();
     }
 
+}
+
+
+// Lazy libpostal init
+bool lazy_libpostal_init() {
+
+	if( !libpostal_is_inited ) {
+
+		if ( libpostal_setup_language_classifier() && libpostal_setup_parser()) {
+			libpostal_is_inited = true;
+		}
+	}
+
+	return libpostal_is_inited;
 }
 
 /*
